@@ -16,6 +16,9 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import edu.wpi.first.util.datalog.DataLog;
+import edu.wpi.first.util.datalog.DoubleLogEntry;
+import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,12 +33,24 @@ public class Robot extends TimedRobot {
   TalonSRX dyno;
   TalonFX talon;
 
+  DataLog log;
+  DoubleLogEntry srxLog = new DoubleLogEntry(log, "test/log");
+  DoubleLogEntry talonSupplyLog = new DoubleLogEntry(log, "test/log");
+  DoubleLogEntry talonTorqueLog = new DoubleLogEntry(log, "test/log");
+  DoubleLogEntry talonVelocityLog = new DoubleLogEntry(log, "test/log");  
+
   @Override
   public void robotInit() {
     SmartDashboard.putBoolean("REQUESTSERVER", false);
     Unmanaged.loadPhoenix();
 
+    DataLogManager.start();
+    log = DataLogManager.getLog();
     // connectMotor();
+    srxLog = new DoubleLogEntry(log, "test/log");
+    talonSupplyLog = new DoubleLogEntry(log, "test/log");
+    talonTorqueLog = new DoubleLogEntry(log, "test/log");
+    talonVelocityLog = new DoubleLogEntry(log, "test/log"); 
   }
   
 
@@ -52,11 +67,15 @@ public class Robot extends TimedRobot {
 
     talon.setControl(new VoltageOut(4));
 
-    
+    // DataLogManager.start();
     SmartDashboard.putNumber("velocity", talon.getVelocity().getValueAsDouble());
     SmartDashboard.putNumber("supply current", talon.getSupplyCurrent().getValueAsDouble());
     SmartDashboard.putNumber("torque current", talon.getTorqueCurrent().getValueAsDouble());
-    
+    srxLog.append(dyno.getMotorOutputVoltage());
+    talonVelocityLog.append(talon.getVelocity().getValueAsDouble());
+    talonSupplyLog.append(talon.getSupplyCurrent().getValueAsDouble());
+    talonTorqueLog.append(talon.getTorqueCurrent().getValueAsDouble());
+
     SmartDashboard.putNumber("srx", dyno.getMotorOutputVoltage());
     // for (int i = 0; i < 40; i += 2) {
     //     final int index = i;
@@ -65,7 +84,8 @@ public class Robot extends TimedRobot {
     //     }).withTimeout(2);
     // }
 
-    dyno.set(ControlMode.PercentOutput, 90);
+
+    dyno.set(ControlMode.PercentOutput, 8 / dyno.getBusVoltage());
 
     SmartDashboard.putBoolean("REQUESTSERVER", false);
 
